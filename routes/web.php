@@ -16,4 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+//tracking link
 Route::get('/trcklnk-additive', 'TrackerApiController@trackme');
