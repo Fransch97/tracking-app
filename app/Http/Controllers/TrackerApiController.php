@@ -10,59 +10,63 @@ use Jenssegers\Agent\Agent;
 class TrackerApiController extends Controller
 {
 
-    public function trackme(Request $req){
+    public function trackme(Request $req, $link){
         $new_track = new TrackerApi();
-        $new_track->ip_adress = $req->ip();
+
+        $new_track->ip_adress = $req->server->get('REMOTE_ADDR');
 
         //get location
-        $new_track->locations = Location::get($new_track->ip_adress);
 
-        //get device info
+        $locationObj = Location::get($req->ip());
+        if($locationObj){
+            $new_track->locations = $locationObj->countryName;
+        }else{
+            $new_track->locations = "unavailable";
+        }
+
+        //get OS info
         $os_data = ['Windows','Mac','Linux','GNU'];
+        $new_track->OS = "Not defined";
         foreach($os_data as $os){
             if (str_contains($_SERVER['HTTP_USER_AGENT'], $os)){
                 $new_track->OS = $os;
-            }else{
-                $new_track->OS = "Not defined";
             }
         }
+
+        //get device info
         $agent = new Agent;
         $mobileResult = $agent->isMobile();
         if ($mobileResult) {
-          $result = 'Mobile';
+            $new_track->device = $result = 'Mobile';
         }
 
         $desktopResult= $agent->isDesktop();
         if ($desktopResult) {
-          $result = 'Desktop';
+            $new_track->device = $result = 'Desktop';
         }
 
         $tabletResult= $agent->isTablet();
         if ($tabletResult) {
-          $result = 'Desktop';
+            $new_track->device = $result = 'Tablet';
         }
 
         $tabletResult= $agent->isPhone();
         if ($tabletResult) {
-          $result = 'Mobile';
+            $new_track->device =  $result = 'Phone';
         }
-        $new_track->device = $result;
 
-        //get referer
-        if(empty($_SERVER['HTTP_REFERER'])){
+        if(empty($req->headers->get('referer'))){
 
-            $new_track->refferer = "127.0.0.1"         ;
+            $new_track->refferer = "direct"         ;
         }else{
-            $new_track->refferer = $_SERVER['HTTP_REFERER'];
+            $new_track->refferer = $req->headers->get('referer');
         }
 
-        $new_track->url = $req->url();
+        $new_track->url = $link;
         $new_track->language = $req->getLocale();
         $new_track->save();
 
 
-        // return response()->json($new_track);
-        return redirect()->away('https://www.additive.eu/en/');
+        return redirect()->away('https://www.'.$link);
     }
 }
-

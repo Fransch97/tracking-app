@@ -18,4 +18,4 @@ Route::get('/', function () {
 });
 
 //tracking link
-Route::get('/trcklnk-additive', 'TrackerApiController@trackme');
+Route::get('/{link}', 'TrackerApiController@trackme');
